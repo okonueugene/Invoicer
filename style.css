@@ -1,0 +1,168 @@
+:root {
+    --primary: #2c3e50;
+    --bg: #eef1f5;
+    --sidebar-width: 420px;
+}
+* { box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); min-height: 100vh; }
+
+.app-container { display: flex; height: 100vh; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar { 
+    width: var(--sidebar-width); 
+    background: white; 
+    border-right: 1px solid #ddd; 
+    display: flex; 
+    flex-direction: column; 
+    z-index: 10; 
+    overflow-y: auto; 
+}
+
+.header { padding: 20px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; }
+.content { padding: 20px; padding-bottom: 100px; }
+.section { margin-bottom: 20px; background: #fff; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+.section h3 { color: var(--primary); font-size: 13px; text-transform: uppercase; border-left: 3px solid var(--primary); padding-left: 10px; margin-top: 0; }
+
+/* INPUTS */
+label { display: block; font-size: 11px; font-weight: 600; color: #666; margin-bottom: 3px; }
+input, textarea, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 8px; font-size: 13px;}
+.row { display: flex; gap: 10px; }
+.slider-group { display: flex; align-items: center; gap: 10px; }
+.slider-group input { flex: 1; margin: 0; }
+.slider-val { font-size: 11px; width: 40px; text-align: right; color: #666; }
+
+/* BUTTONS */
+.btn { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px;}
+.btn:hover { background: #34495e; }
+.btn-secondary { background: #fff; color: var(--primary); border: 1px solid var(--primary); padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+.btn-danger { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+.btn-group { display: flex; gap: 10px; margin-top: 20px; }
+
+/* PREVIEW AREA */
+.main-preview { 
+    flex: 1; 
+    background: #525659; 
+    padding: 40px; 
+    overflow-y: auto; 
+    display: flex; 
+    justify-content: center; 
+}
+
+/* INVOICE PAPER */
+.paper {
+    background: white; width: 210mm; min-height: 297mm; padding: 40px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3); position: relative;
+    color: var(--txt-col, #333);
+    overflow: hidden; 
+}
+
+/* LAYOUT ELEMENTS */
+.pdf-header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+.brand-title { font-size: 24px; font-weight: bold; color: var(--theme-col); margin-top:5px; text-align: center;}
+.inv-title { font-size: 36px; font-weight: bold; color: var(--title-col); text-align: right; margin: 0; text-transform: uppercase;}
+
+.rounded-box {
+    border: 1px solid var(--theme-col); border-radius: 12px; padding: 15px;
+    font-size: 13px; line-height: 1.5; min-height: 110px; position: relative;
+}
+
+/* TABLE STYLES */
+table.inv-table { 
+    width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; 
+    border: 1px solid var(--theme-col); 
+}
+table.inv-table th { 
+    background: transparent; color: var(--txt-col); 
+    border-bottom: 1px solid var(--theme-col); border-right: 1px solid var(--theme-col); 
+    padding: 8px; text-align: left; font-weight: normal; 
+}
+table.inv-table td { border-bottom: 1px solid #eee; border-right: 1px solid var(--theme-col); padding: 8px; }
+table.inv-table tr:last-child td { border-bottom: none; }
+table.inv-table td:last-child, table.inv-table th:last-child { border-right: none; }
+.text-right { text-align: right; }
+
+/* TOTALS & FOOTER */
+.totals-area { display: flex; justify-content: space-between; margin-top: 20px; }
+
+/* NEW AUTH SECTION STYLES */
+.auth-section { 
+    display: flex; 
+    align-items: center; 
+    position: relative; /* Allows overlapping */
+    height: 150px;
+    width: 300px; 
+}
+.stamp-wrap { 
+    width: 150px; 
+    height: 150px; 
+    position: relative;
+    z-index: 10;
+}
+.signature-img { 
+    max-height: 100px; 
+    max-width: 180px; 
+    display: block; 
+    position: relative;
+    z-index: 5; /* Sit slightly behind stamp or atop based on pref */
+    /* KEY BLENDING MODES */
+    mix-blend-mode: multiply; 
+}
+
+.balance-box { border: 1px solid var(--theme-col); border-radius: 6px; padding: 8px 15px; font-weight: bold; display: inline-block; margin-top: 5px; }
+
+.footer-text { position: absolute; bottom: 30px; left: 0; right: 0; text-align: center; font-size: 10px; color: #777; padding: 0 40px;}
+
+/* --- STRICT SINGLE PAGE PRINT FIX --- */
+@media print {
+    @page { 
+        margin: 0; 
+        size: A4 portrait;
+    }
+    
+    html, body {
+        width: 210mm;
+        /* Force height to be slightly less than full A4 to prevent overflow */
+        height: 296mm !important; 
+        background: white;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important; 
+    }
+
+    .app-container {
+        display: block !important;
+        height: 296mm !important;
+        overflow: hidden !important;
+    }
+
+    .sidebar, .header, .btn-group { 
+        display: none !important; 
+    }
+
+    .main-preview { 
+        padding: 0 !important; 
+        margin: 0 !important; 
+        background: white; 
+        display: block !important; 
+        height: 296mm !important;
+        width: 210mm !important;
+        overflow: hidden !important;
+    }
+
+    .paper { 
+        box-shadow: none !important; 
+        margin: 0 !important; 
+        border: none !important;
+        width: 100% !important; 
+        height: 296mm !important;
+        padding: 15mm !important; 
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    * { 
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important; 
+    }
+}

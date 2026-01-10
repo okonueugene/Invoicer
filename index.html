@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice Settings</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="header">
+                <h2>Settings</h2>
+            </div>
+            <div class="content">
+                <form id="settingsForm">
+                    
+                    <div class="section" style="background:#e8f4f8; border:1px solid #bce0fd;">
+                        <h3>Invoice Tracker</h3>
+                        <p style="font-size:11px; color:#666; margin-bottom:10px;">Auto-increments when you click Print.</p>
+                        <div class="row">
+                            <div style="flex:1">
+                                <label>Prefix</label>
+                                <input type="text" id="trackPrefix">
+                            </div>
+                            <div style="flex:1">
+                                <label>Next Num</label>
+                                <input type="number" id="trackNum">
+                            </div>
+                            <div style="flex:1">
+                                <label>Padding</label>
+                                <input type="number" id="trackPad" min="1" max="6">
+                            </div>
+                        </div>
+                        <div style="font-size:12px; font-weight:bold; color:var(--primary); text-align:right;">
+                            Preview: <span id="trackPreview"></span>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3>Branding</h3>
+                        <label>Company Name</label>
+                        <input type="text" id="brandName">
+                        
+                        <label>Logo File</label>
+                        <input type="file" id="logoInput" accept="image/*">
+                        <input type="hidden" id="logoBase64">
+                        
+                        <label>Logo Width (px)</label>
+                        <div class="slider-group">
+                            <input type="range" id="logoWidth" min="50" max="300" step="10" oninput="document.getElementById('widthDisp').innerText = this.value + 'px'">
+                            <span class="slider-val" id="widthDisp">100px</span>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3>Vendor Address</h3>
+                        <textarea id="address" rows="4"></textarea>
+                    </div>
+
+                    <div class="section">
+                        <h3>E-Signature</h3>
+                        <label>Upload Image</label>
+                        <input type="file" id="sigInput" accept="image/*">
+                        <input type="hidden" id="sigBase64">
+                        
+                        <label>Horizontal Position (Left/Right)</label>
+                        <div class="slider-group">
+                            <input type="range" id="sigX" min="-100" max="100" step="5" oninput="document.getElementById('sigXDisp').innerText = this.value + 'px'">
+                            <span class="slider-val" id="sigXDisp">0px</span>
+                        </div>
+                        <small style="color:#666; font-size:10px;">Move signature closer to stamp</small>
+                    </div>
+
+                    <div class="section">
+                        <h3>Colors</h3>
+                        <div class="row">
+                            <div><label>Outlines</label><input type="color" id="themeColor"></div>
+                            <div><label>Title</label><input type="color" id="titleColor"></div>
+                            <div><label>Text</label><input type="color" id="textColor"></div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3>Stamp Config</h3>
+                        <div class="row">
+                             <select id="stampShow"><option value="true">Show Stamp</option><option value="false">Hide Stamp</option></select>
+                             <select id="stampShape"><option value="circle">Circle</option><option value="oval">Oval</option></select>
+                        </div>
+                        <input type="text" id="stampTop" placeholder="Top Text">
+                        <input type="text" id="stampBottom" placeholder="Bottom Text">
+                        <label>Telephone Number</label>
+                        <input type="text" id="stampPhone">
+                        <div class="row">
+                            <div><label>Ink</label><input type="color" id="stampInk"></div>
+                            <div><label>Date Ink</label><input type="color" id="stampDateInk"></div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn" onclick="saveSettingsForm()">Save & Go To Invoice</button>
+                    <a href="invoice.html" style="text-align:center; display:block; margin-top:15px; font-size:12px; text-decoration:none; color:#555;">Skip to Invoice &rarr;</a>
+                </form>
+            </div>
+        </aside>
+
+        <main class="main-preview">
+            <div class="paper" id="paper">
+                <div class="pdf-header">
+                    <div style="text-align:center; min-width: 200px;">
+                        <img id="prevLogo" style="display:none; margin: 0 auto;">
+                        <div id="prevBrand" class="brand-title"></div>
+                    </div>
+                    <div><h1 class="inv-title">PREVIEW</h1></div>
+                </div>
+                
+                <div class="rounded-box">
+                    <strong>Vendor Details:</strong><br>
+                    <span id="prevAddress" style="white-space: pre-wrap;"></span>
+                </div>
+
+                <div class="totals-area">
+                     <div class="auth-section">
+                        <div class="stamp-wrap" id="prevStamp"></div>
+                        <img id="prevSig" class="signature-img" style="display:none;">
+                     </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const data = loadData();
+        
+        // Load UI
+        document.getElementById('trackPrefix').value = data.tracker.prefix;
+        document.getElementById('trackNum').value = data.tracker.currentNum;
+        document.getElementById('trackPad').value = data.tracker.padding;
+
+        document.getElementById('brandName').value = data.company.brandName;
+        document.getElementById('address').value = data.company.address;
+        document.getElementById('logoBase64').value = data.company.logo;
+        document.getElementById('logoWidth').value = data.company.logoWidth || 100;
+        document.getElementById('widthDisp').innerText = (data.company.logoWidth || 100) + 'px';
+        
+        document.getElementById('sigBase64').value = data.company.signature || "";
+        document.getElementById('sigX').value = data.company.signatureX || 0;
+        document.getElementById('sigXDisp').innerText = (data.company.signatureX || 0) + 'px';
+        
+        document.getElementById('themeColor').value = data.visuals.themeColor;
+        document.getElementById('titleColor').value = data.visuals.titleColor;
+        document.getElementById('textColor').value = data.visuals.textColor;
+        
+        document.getElementById('stampShow').value = data.stamp.show;
+        document.getElementById('stampTop').value = data.stamp.top;
+        document.getElementById('stampBottom').value = data.stamp.bottom;
+        document.getElementById('stampPhone').value = data.stamp.phone;
+        document.getElementById('stampInk').value = data.stamp.ink;
+        document.getElementById('stampDateInk').value = data.stamp.dateInk;
+        document.getElementById('stampShape').value = data.stamp.shape;
+
+        updatePreview();
+
+        // Listeners
+        document.querySelectorAll('input, textarea, select').forEach(i => i.addEventListener('input', updatePreview));
+        
+        document.getElementById('logoInput').addEventListener('change', function() {
+            handleImageUpload(this, (base64) => {
+                document.getElementById('logoBase64').value = base64;
+                updatePreview();
+            });
+        });
+
+        document.getElementById('sigInput').addEventListener('change', function() {
+            handleImageUpload(this, (base64) => {
+                document.getElementById('sigBase64').value = base64;
+                updatePreview();
+            });
+        });
+
+        function updatePreview() {
+            // Update Tracker
+            const prefix = document.getElementById('trackPrefix').value;
+            const num = document.getElementById('trackNum').value;
+            const pad = document.getElementById('trackPad').value;
+            document.getElementById('trackPreview').innerText = prefix + num.toString().padStart(pad, '0');
+
+            // Apply Colors
+            const root = document.documentElement;
+            root.style.setProperty('--theme-col', document.getElementById('themeColor').value);
+            root.style.setProperty('--title-col', document.getElementById('titleColor').value);
+            root.style.setProperty('--txt-col', document.getElementById('textColor').value);
+
+            // Update Content
+            document.getElementById('prevBrand').textContent = document.getElementById('brandName').value;
+            document.getElementById('prevAddress').textContent = document.getElementById('address').value;
+            
+            const logo = document.getElementById('prevLogo');
+            const logoData = document.getElementById('logoBase64').value;
+            const logoW = document.getElementById('logoWidth').value;
+            if(logoData) { logo.src = logoData; logo.style.display = 'block'; logo.style.width = logoW + 'px'; }
+            
+            const sig = document.getElementById('prevSig');
+            const sigData = document.getElementById('sigBase64').value;
+            const sigX = document.getElementById('sigX').value;
+            
+            if(sigData) { 
+                sig.src = sigData; 
+                sig.style.display = 'block'; 
+                // Apply the offset
+                sig.style.transform = `translateX(${sigX}px)`;
+            } else { 
+                sig.style.display = 'none'; 
+            }
+
+            // Update Stamp
+            const stampConfig = {
+                show: document.getElementById('stampShow').value,
+                top: document.getElementById('stampTop').value,
+                bottom: document.getElementById('stampBottom').value,
+                phone: document.getElementById('stampPhone').value,
+                ink: document.getElementById('stampInk').value,
+                dateInk: document.getElementById('stampDateInk').value,
+                shape: document.getElementById('stampShape').value
+            };
+            document.getElementById('prevStamp').innerHTML = getStampSVG(stampConfig, new Date());
+        }
+
+        function saveSettingsForm() {
+            const current = {
+                company: {
+                    brandName: document.getElementById('brandName').value,
+                    address: document.getElementById('address').value,
+                    logo: document.getElementById('logoBase64').value,
+                    logoWidth: document.getElementById('logoWidth').value,
+                    signature: document.getElementById('sigBase64').value,
+                    signatureX: document.getElementById('sigX').value
+                },
+                visuals: {
+                    themeColor: document.getElementById('themeColor').value,
+                    titleColor: document.getElementById('titleColor').value,
+                    textColor: document.getElementById('textColor').value
+                },
+                stamp: {
+                    show: document.getElementById('stampShow').value,
+                    top: document.getElementById('stampTop').value,
+                    bottom: document.getElementById('stampBottom').value,
+                    phone: document.getElementById('stampPhone').value,
+                    ink: document.getElementById('stampInk').value,
+                    dateInk: document.getElementById('stampDateInk').value,
+                    shape: document.getElementById('stampShape').value
+                },
+                tracker: {
+                    prefix: document.getElementById('trackPrefix').value,
+                    currentNum: parseInt(document.getElementById('trackNum').value),
+                    padding: parseInt(document.getElementById('trackPad').value)
+                }
+            };
+            saveAndRedirect(current);
+        }
+    </script>
+</body>
+</html>

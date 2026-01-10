@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>New Invoice</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .paper, .paper * {
+                visibility: visible;
+            }
+            .paper {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 210mm;
+                height: 297mm;
+                margin: 0;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="header">
+                <h2>Invoice Editor</h2>
+                <a href="index.html" class="btn-secondary" style="text-decoration:none; font-size:12px;">Settings</a>
+            </div>
+            <div class="content">
+                
+                <div class="section">
+                    <h3>Metadata</h3>
+                    <div class="row">
+                        <div><label>Inv No</label><input type="text" id="invNo" readonly style="background:#f0f0f0; color:#555;"></div>
+                        <div><label>Date</label><input type="date" id="invDate"></div>
+                    </div>
+                    <div class="row">
+                        <div><label>Account No</label><input type="text" id="accNo"></div>
+                        <div><label>Vendor PIN</label><input type="text" id="pinNo" value="P051332355X"></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Client Details</h3>
+                    <textarea id="buyer" rows="3" placeholder="Client Name & Address"></textarea>
+                    <div class="row">
+                        <div><label>Client PIN</label><input type="text" id="buyerPin"></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>References & Terms</h3>
+                    <div class="row">
+                        <div><label>P.O No</label><input type="text" id="poNo" value="Verbal"></div>
+                        <div><label>D.N No</label><input type="text" id="dnNo"></div>
+                    </div>
+                    <div class="row">
+                         <div><label>Terms</label><input type="text" id="terms" value="Due on receipt"></div>
+                         <div><label>Due Date</label><input type="date" id="dueDate"></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Items</h3>
+                    <div style="margin-bottom:10px;">
+                        <label>VAT Mode (Input)</label>
+                        <select id="vatMode" onchange="render()">
+                            <option value="exclusive">Tax Exclusive (Rate = Pre-Tax)</option>
+                            <option value="inclusive">Tax Inclusive (Rate = Post-Tax)</option>
+                        </select>
+                    </div>
+                    <div id="itemsList"></div>
+                    <button type="button" class="btn-secondary" onclick="addItem()">+ Add Item</button>
+                </div>
+
+                <div class="section">
+                    <h3>Footer</h3>
+                    <input type="text" id="footerText" placeholder="Control Code / Footer Note">
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn" style="flex:1; background:#e67e22;" onclick="handlePDF()">Download PDF</button>
+                    <button class="btn" style="flex:1;" onclick="handlePrint()">Print</button>
+                </div>
+                <div style="text-align:center; margin-top:5px; font-size:11px; color:#666;">
+                    Both actions will increment Invoice #
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-preview">
+            <div class="paper" id="invoicePaper">
+                <div class="pdf-header">
+                    <div style="text-align:center; min-width: 200px;">
+                        <img id="logo" style="display:none; margin: 0 auto;">
+                        <div id="brand" class="brand-title"></div>
+                    </div>
+                    <div style="text-align:right">
+                        <h1 class="inv-title">INVOICE</h1>
+                        <table style="float:right; font-size:13px; margin-top:10px;">
+                            <tr><td style="padding:2px 10px 2px 0;">Invoice Date:</td><td id="p_date"></td></tr>
+                            <tr><td style="padding:2px 10px 2px 0;">Invoice No:</td><td id="p_no"></td></tr>
+                            <tr><td style="padding:2px 10px 2px 0;">Account No:</td><td id="p_acc"></td></tr>
+                            <tr><td style="padding:2px 10px 2px 0;">PIN NO:</td><td id="p_vendorPin"></td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:20px; margin-bottom:20px;">
+                    <div class="rounded-box" style="flex:1">
+                        <span id="p_address" style="white-space: pre-wrap;"></span>
+                    </div>
+                    <div class="rounded-box" style="flex:1">
+                        <span style="font-style:italic;">Invoice To:</span><br>
+                        <span id="p_buyer" style="white-space: pre-wrap;"></span>
+                        <div style="position:absolute; bottom:15px; width:90%; display:flex; justify-content:space-between;">
+                             <span>Cust PIN:</span><span id="p_clientPin"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-size:13px;">
+                    <div>
+                        <span style="display:inline-block; width:70px;">Terms:</span><span id="p_terms"></span><br>
+                        <span style="display:inline-block; width:70px; margin-top:5px;">Due Date:</span><span id="p_due"></span>
+                    </div>
+                    <div>
+                        <span style="display:inline-block; width:60px;">P.O No:</span><span id="p_po"></span><br>
+                        <span style="display:inline-block; width:60px; margin-top:5px;">D.N No:</span><span id="p_dn"></span>
+                    </div>
+                </div>
+
+                <table class="inv-table">
+                    <thead>
+                        <tr><th width="40%">Description</th><th width="10%" class="text-right">Qty</th><th width="10%" class="text-right">U/M</th><th width="20%" class="text-right">Rate (Net)</th><th width="20%" class="text-right">Amount (Net)</th></tr>
+                    </thead>
+                    <tbody id="p_tbody"></tbody>
+                </table>
+
+                <div class="totals-area">
+                    <div class="auth-section">
+                        <div class="stamp-wrap" id="p_stamp"></div>
+                        <img id="p_sig" class="signature-img" style="display:none">
+                    </div>
+                    
+                    <div style="width:45%; text-align:right; font-size:13px;">
+                        <table style="width:100%; border-collapse:collapse;">
+                            <tr><td style="padding:5px; border-bottom:1px solid var(--theme-col);">Subtotal (Excl)</td><td id="p_sub" style="padding:5px; border-bottom:1px solid var(--theme-col);">0.00</td></tr>
+                            <tr><td style="padding:5px; border-bottom:1px solid var(--theme-col);">VAT (16%)</td><td id="p_vat" style="padding:5px; border-bottom:1px solid var(--theme-col);">0.00</td></tr>
+                            <tr><td style="padding:5px; font-weight:bold;">Total</td><td id="p_total" style="padding:5px; font-weight:bold;">0.00</td></tr>
+                        </table>
+                        <div class="balance-box">
+                             <span style="margin-right:10px;">Balance Due</span> <span id="p_balance">KES 0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer-text" id="p_footer"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        checkInit();
+        const settings = loadData();
+        
+        // --- 1. APPLY VISUALS ---
+        const root = document.documentElement;
+        root.style.setProperty('--theme-col', settings.visuals.themeColor);
+        root.style.setProperty('--title-col', settings.visuals.titleColor);
+        root.style.setProperty('--txt-col', settings.visuals.textColor);
+
+        document.getElementById('brand').textContent = settings.company.brandName;
+        document.getElementById('p_address').textContent = settings.company.address;
+        
+        document.getElementById('invNo').value = getInvoiceNumberString(settings);
+
+        if(settings.company.logo) {
+            const l = document.getElementById('logo');
+            l.src = settings.company.logo;
+            l.style.display = 'block';
+            l.style.width = (settings.company.logoWidth || 100) + 'px';
+        }
+
+        if(settings.company.signature) {
+            const s = document.getElementById('p_sig');
+            s.src = settings.company.signature;
+            s.style.display = 'block';
+            
+            // APPLY SAVED OFFSET
+            const xOffset = settings.company.signatureX || 0;
+            s.style.transform = `translateX(${xOffset}px)`;
+        }
+
+        // --- 2. INIT STATE ---
+        document.getElementById('invDate').valueAsDate = new Date();
+        document.getElementById('dueDate').valueAsDate = new Date();
+        let items = [{desc: "", qty: 1, um: "Pcs", price: 0}];
+
+        // --- 3. ACTIONS ---
+        function finalizeInvoice() {
+            const nextNum = incrementInvoiceNumber();
+            document.getElementById('invNo').value = nextNum;
+            render();
+        }
+
+        function handlePrint() {
+            const invNum = document.getElementById('invNo').value;
+            const originalTitle = document.title;
+            document.title = invNum;
+            window.print();
+            document.title = originalTitle;
+            finalizeInvoice();
+        }
+
+        function handlePDF() {
+            const invNum = document.getElementById('invNo').value;
+            const element = document.getElementById('invoicePaper');
+            const opt = {
+                margin:       0.2,
+                filename:     invNum + '.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save().then(() => {
+                finalizeInvoice();
+            });
+        }
+        // --- 4. RENDER FUNCTION ---
+        function render() {
+            document.getElementById('p_no').textContent = document.getElementById('invNo').value;
+            document.getElementById('p_date').textContent = new Date(document.getElementById('invDate').value).toLocaleDateString('en-GB');
+            document.getElementById('p_acc').textContent = document.getElementById('accNo').value;
+            document.getElementById('p_vendorPin').textContent = document.getElementById('pinNo').value;
+            
+            document.getElementById('p_buyer').textContent = document.getElementById('buyer').value;
+            document.getElementById('p_clientPin').textContent = document.getElementById('buyerPin').value;
+            document.getElementById('p_terms').textContent = document.getElementById('terms').value;
+            document.getElementById('p_po').textContent = document.getElementById('poNo').value;
+            document.getElementById('p_dn').textContent = document.getElementById('dnNo').value;
+            document.getElementById('p_footer').textContent = document.getElementById('footerText').value;
+            
+            const dueD = document.getElementById('dueDate').valueAsDate;
+            document.getElementById('p_due').textContent = dueD ? dueD.toLocaleDateString('en-GB') : '';
+
+            const tbody = document.getElementById('p_tbody');
+            tbody.innerHTML = '';
+            const isInclusive = document.getElementById('vatMode').value === 'inclusive';
+            
+            let mathSubtotal = 0;
+            let mathVat = 0;
+            let mathTotal = 0;
+
+            items.forEach((item) => {
+                let displayRate = item.price;
+                let lineTotal = 0;
+                if (isInclusive) {
+                    displayRate = item.price / 1.16;
+                    lineTotal = displayRate * item.qty;
+                } else {
+                    lineTotal = item.price * item.qty;
+                }
+                mathSubtotal += lineTotal;
+                
+                tbody.innerHTML += `
+                <tr>
+                    <td>${item.desc}</td>
+                    <td class="text-right">${item.qty}</td>
+                    <td class="text-right">${item.um}</td>
+                    <td class="text-right">${displayRate.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                    <td class="text-right">${lineTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                </tr>`;
+            });
+
+            mathVat = mathSubtotal * 0.16;
+            mathTotal = mathSubtotal + mathVat;
+
+            for(let i=items.length; i<5; i++) tbody.innerHTML += `<tr><td style="height:30px;"></td><td></td><td></td><td></td><td></td></tr>`;
+
+            const fmt = n => "KES " + n.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('p_sub').textContent = fmt(mathSubtotal);
+            document.getElementById('p_vat').textContent = fmt(mathVat);
+            document.getElementById('p_total').textContent = fmt(mathTotal);
+            document.getElementById('p_balance').textContent = fmt(mathTotal);
+
+            document.getElementById('p_stamp').innerHTML = getStampSVG(settings.stamp, document.getElementById('invDate').value);
+        }
+
+        // --- 5. EDITOR HELPERS ---
+        function renderEditor() {
+            const list = document.getElementById('itemsList');
+            list.innerHTML = '';
+            items.forEach((item, i) => {
+                const div = document.createElement('div');
+                div.className = 'row';
+                div.style.background = '#f9f9f9'; div.style.padding='5px'; div.style.marginBottom='5px';
+                div.innerHTML = `
+                    <div style="flex:3"><input type="text" value="${item.desc}" oninput="items[${i}].desc=this.value; render()" placeholder="Desc"></div>
+                    <div style="flex:1"><input type="number" value="${item.qty}" oninput="items[${i}].qty=this.value; render()" placeholder="Qty"></div>
+                    <div style="flex:1"><input type="text" value="${item.um}" oninput="items[${i}].um=this.value; render()" placeholder="U/M"></div>
+                    <div style="flex:2"><input type="number" value="${item.price}" oninput="items[${i}].price=this.value; render()" placeholder="Rate"></div>
+                    <button class="btn-danger" onclick="items.splice(${i},1); renderEditor(); render()" style="width:auto; height:36px; margin-top:0;">x</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+        
+        window.addItem = () => { items.push({desc:"", qty:1, um:"Pcs", price:0}); renderEditor(); render(); }
+        document.querySelectorAll('input, textarea').forEach(el => el.addEventListener('input', render));
+        renderEditor();
+        render();
+    </script>
+</body>
+</html>
