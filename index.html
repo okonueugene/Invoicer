@@ -4,6 +4,20 @@
     <meta charset="UTF-8">
     <title>Invoice Settings</title>
     <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="sweetalert.js"></script>
+    <style>
+        .checkbox-inline {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 11px;
+            font-weight: normal;
+        }
+        .checkbox-inline input {
+            width: auto;
+            margin: 0 5px 0 0;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -43,6 +57,10 @@
                         
                         <label>Logo File</label>
                         <input type="file" id="logoInput" accept="image/*">
+                        <label class="checkbox-inline">
+                            <input type="checkbox" id="logoRemoveBg">
+                            Remove background
+                        </label>
                         <input type="hidden" id="logoBase64">
                         
                         <label>Logo Width (px)</label>
@@ -61,6 +79,10 @@
                         <h3>E-Signature</h3>
                         <label>Upload Image</label>
                         <input type="file" id="sigInput" accept="image/*">
+                        <label class="checkbox-inline">
+                            <input type="checkbox" id="sigRemoveBg">
+                            Remove background
+                        </label>
                         <input type="hidden" id="sigBase64">
                         
                         <label>Horizontal Position (Left/Right)</label>
@@ -88,6 +110,8 @@
                         </div>
                         <input type="text" id="stampTop" placeholder="Top Text">
                         <input type="text" id="stampBottom" placeholder="Bottom Text">
+                        <label>Email Address</label>
+                        <input type="email" id="stampEmail">
                         <label>Telephone Number</label>
                         <input type="text" id="stampPhone">
                         <div class="row">
@@ -128,7 +152,7 @@
     </div>
 
     <script src="script.js"></script>
-    <script>
+    <script type="module">
         const data = loadData();
         
         // Load UI
@@ -153,6 +177,7 @@
         document.getElementById('stampShow').value = data.stamp.show;
         document.getElementById('stampTop').value = data.stamp.top;
         document.getElementById('stampBottom').value = data.stamp.bottom;
+        document.getElementById('stampEmail').value = data.stamp.email || "";
         document.getElementById('stampPhone').value = data.stamp.phone;
         document.getElementById('stampInk').value = data.stamp.ink;
         document.getElementById('stampDateInk').value = data.stamp.dateInk;
@@ -161,20 +186,24 @@
         updatePreview();
 
         // Listeners
-        document.querySelectorAll('input, textarea, select').forEach(i => i.addEventListener('input', updatePreview));
+        document.querySelectorAll('input:not([type="file"]), textarea, select').forEach(i => i.addEventListener('input', updatePreview));
         
-        document.getElementById('logoInput').addEventListener('change', function() {
-            handleImageUpload(this, (base64) => {
+        // Logo upload with background removal option
+        document.getElementById('logoInput').addEventListener('change', async function() {
+            const removeBg = document.getElementById('logoRemoveBg').checked;
+            await handleImageUpload(this, (base64) => {
                 document.getElementById('logoBase64').value = base64;
                 updatePreview();
-            });
+            }, removeBg);
         });
 
-        document.getElementById('sigInput').addEventListener('change', function() {
-            handleImageUpload(this, (base64) => {
+        // Signature upload with background removal option
+        document.getElementById('sigInput').addEventListener('change', async function() {
+            const removeBg = document.getElementById('sigRemoveBg').checked;
+            await handleImageUpload(this, (base64) => {
                 document.getElementById('sigBase64').value = base64;
                 updatePreview();
-            });
+            }, removeBg);
         });
 
         function updatePreview() {
@@ -206,7 +235,6 @@
             if(sigData) { 
                 sig.src = sigData; 
                 sig.style.display = 'block'; 
-                // Apply the offset
                 sig.style.transform = `translateX(${sigX}px)`;
             } else { 
                 sig.style.display = 'none'; 
@@ -217,6 +245,7 @@
                 show: document.getElementById('stampShow').value,
                 top: document.getElementById('stampTop').value,
                 bottom: document.getElementById('stampBottom').value,
+                email: document.getElementById('stampEmail').value,
                 phone: document.getElementById('stampPhone').value,
                 ink: document.getElementById('stampInk').value,
                 dateInk: document.getElementById('stampDateInk').value,
@@ -225,7 +254,7 @@
             document.getElementById('prevStamp').innerHTML = getStampSVG(stampConfig, new Date());
         }
 
-        function saveSettingsForm() {
+        window.saveSettingsForm = function() {
             const current = {
                 company: {
                     brandName: document.getElementById('brandName').value,
@@ -244,6 +273,7 @@
                     show: document.getElementById('stampShow').value,
                     top: document.getElementById('stampTop').value,
                     bottom: document.getElementById('stampBottom').value,
+                    email: document.getElementById('stampEmail').value,
                     phone: document.getElementById('stampPhone').value,
                     ink: document.getElementById('stampInk').value,
                     dateInk: document.getElementById('stampDateInk').value,

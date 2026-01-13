@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>New Invoice</title>
+    <title>Invoicer</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="html2canvas.min.js"></script>
+    <script src="jspdf.umd.min.js"></script>
+    <script src="sweetalert.js"></script>
     <style>
         @media print {
             body * {
@@ -205,7 +206,45 @@
         document.getElementById('dueDate').valueAsDate = new Date();
         let items = [{desc: "", qty: 1, um: "Pcs", price: 0}];
 
-        // --- 3. ACTIONS ---
+        // --- 3. VALIDATION ---
+        function validateInvoice() {
+            const buyer = document.getElementById('buyer').value.trim();
+            const hasItems = items.some(item => item.desc.trim() !== '' && parseFloat(item.price) > 0);
+            
+            if (!buyer) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Missing Client Details',
+                        text: 'Please enter client name and address',
+                        icon: 'warning',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#e67e22'
+                    });
+                } else {
+                    Swal.fire({title: 'Missing Client Details', text: 'Please enter client name and address', icon: 'warning'});
+                }
+                return false;
+            }
+            
+            if (!hasItems) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'No Items Added',
+                        text: 'Please add at least one item with description and price',
+                        icon: 'warning',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#e67e22'
+                    });
+                } else {
+                    Swal.fire({title: 'No Items Added', text: 'Please add at least one item with description and price', icon: 'warning'});
+                }
+                return false;
+            }
+            
+            return true;
+        }
+
+        // --- 4. ACTIONS ---
         function finalizeInvoice() {
             const nextNum = incrementInvoiceNumber();
             document.getElementById('invNo').value = nextNum;
@@ -213,29 +252,106 @@
         }
 
         function handlePrint() {
+            if (!validateInvoice()) return;
+            
             const invNum = document.getElementById('invNo').value;
-            const originalTitle = document.title;
-            document.title = invNum;
-            window.print();
-            document.title = originalTitle;
-            finalizeInvoice();
+            
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Ready to Print',
+                    text: `Invoice ${invNum} will be finalized and the number will increment`,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Print Now',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#2ecc71'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const originalTitle = document.title;
+                        document.title = invNum;
+                        window.print();
+                        document.title = originalTitle;
+                        finalizeInvoice();
+                        
+                        Swal.fire({
+                            title: 'Invoice Finalized!',
+                            text: `Invoice number incremented. Next invoice: ${document.getElementById('invNo').value}`,
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                });
+            } else {
+                const originalTitle = document.title;
+                document.title = invNum;
+                window.print();
+                document.title = originalTitle;
+                finalizeInvoice();
+            }
         }
 
         function handlePDF() {
+            if (!validateInvoice()) return;
+            
             const invNum = document.getElementById('invNo').value;
-            const element = document.getElementById('invoicePaper');
-            const opt = {
-                margin:       0.2,
-                filename:     invNum + '.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-            };
-            html2pdf().set(opt).from(element).save().then(() => {
+            
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Generating PDF...',
+                    text: 'Please wait while we create your invoice',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const invoicePaper = document.getElementById('invoicePaper');
+
+            html2canvas(invoicePaper, { scale: 2 }).then((canvas) => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`${invNum}.pdf`);
+                
                 finalizeInvoice();
+                
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'PDF Downloaded!',
+                        text: `Invoice ${invNum} saved. Next invoice: ${document.getElementById('invNo').value}`,
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#2ecc71'
+                    });
+                }
+            }).catch((error) => {
+                console.error('PDF generation error:', error);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'PDF Generation Failed',
+                        text: 'There was an error creating the PDF. Please try again.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'PDF Generation Failed',
+                        text: 'There was an error creating the PDF. Please try again.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
             });
         }
-        // --- 4. RENDER FUNCTION ---
+   
+        // --- 5. RENDER FUNCTION ---
         function render() {
             document.getElementById('p_no').textContent = document.getElementById('invNo').value;
             document.getElementById('p_date').textContent = new Date(document.getElementById('invDate').value).toLocaleDateString('en-GB');
@@ -295,7 +411,7 @@
             document.getElementById('p_stamp').innerHTML = getStampSVG(settings.stamp, document.getElementById('invDate').value);
         }
 
-        // --- 5. EDITOR HELPERS ---
+        // --- 6. EDITOR HELPERS ---
         function renderEditor() {
             const list = document.getElementById('itemsList');
             list.innerHTML = '';
