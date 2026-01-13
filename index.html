@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Invoice Settings</title>
+    <link rel="shortcut icon" href="./assets/favicon/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="./assets/favicon/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="sweetalert.js"></script>
@@ -13,12 +16,14 @@
             font-size: 11px;
             font-weight: normal;
         }
+
         .checkbox-inline input {
             width: auto;
             margin: 0 5px 0 0;
         }
     </style>
 </head>
+
 <body>
     <div class="app-container">
         <aside class="sidebar">
@@ -27,10 +32,11 @@
             </div>
             <div class="content">
                 <form id="settingsForm">
-                    
+
                     <div class="section" style="background:#e8f4f8; border:1px solid #bce0fd;">
                         <h3>Invoice Tracker</h3>
-                        <p style="font-size:11px; color:#666; margin-bottom:10px;">Auto-increments when you click Print.</p>
+                        <p style="font-size:11px; color:#666; margin-bottom:10px;">Auto-increments when you click Print.
+                        </p>
                         <div class="row">
                             <div style="flex:1">
                                 <label>Prefix</label>
@@ -54,7 +60,7 @@
                         <h3>Branding</h3>
                         <label>Company Name</label>
                         <input type="text" id="brandName">
-                        
+
                         <label>Logo File</label>
                         <input type="file" id="logoInput" accept="image/*">
                         <label class="checkbox-inline">
@@ -62,10 +68,11 @@
                             Remove background
                         </label>
                         <input type="hidden" id="logoBase64">
-                        
+
                         <label>Logo Width (px)</label>
                         <div class="slider-group">
-                            <input type="range" id="logoWidth" min="50" max="300" step="10" oninput="document.getElementById('widthDisp').innerText = this.value + 'px'">
+                            <input type="range" id="logoWidth" min="50" max="300" step="10"
+                                oninput="document.getElementById('widthDisp').innerText = this.value + 'px'">
                             <span class="slider-val" id="widthDisp">100px</span>
                         </div>
                     </div>
@@ -84,10 +91,11 @@
                             Remove background
                         </label>
                         <input type="hidden" id="sigBase64">
-                        
+
                         <label>Horizontal Position (Left/Right)</label>
                         <div class="slider-group">
-                            <input type="range" id="sigX" min="-100" max="100" step="5" oninput="document.getElementById('sigXDisp').innerText = this.value + 'px'">
+                            <input type="range" id="sigX" min="-100" max="100" step="5"
+                                oninput="document.getElementById('sigXDisp').innerText = this.value + 'px'">
                             <span class="slider-val" id="sigXDisp">0px</span>
                         </div>
                         <small style="color:#666; font-size:10px;">Move signature closer to stamp</small>
@@ -105,8 +113,14 @@
                     <div class="section">
                         <h3>Stamp Config</h3>
                         <div class="row">
-                             <select id="stampShow"><option value="true">Show Stamp</option><option value="false">Hide Stamp</option></select>
-                             <select id="stampShape"><option value="circle">Circle</option><option value="oval">Oval</option></select>
+                            <select id="stampShow">
+                                <option value="true">Show Stamp</option>
+                                <option value="false">Hide Stamp</option>
+                            </select>
+                            <select id="stampShape">
+                                <option value="circle">Circle</option>
+                                <option value="oval">Oval</option>
+                            </select>
                         </div>
                         <input type="text" id="stampTop" placeholder="Top Text">
                         <input type="text" id="stampBottom" placeholder="Bottom Text">
@@ -121,7 +135,27 @@
                     </div>
 
                     <button type="button" class="btn" onclick="saveSettingsForm()">Save & Go To Invoice</button>
-                    <a href="invoice.html" style="text-align:center; display:block; margin-top:15px; font-size:12px; text-decoration:none; color:#555;">Skip to Invoice &rarr;</a>
+                    <!-- <a href="invoice.html"
+                        style="text-align:center; display:block; margin-top:15px; font-size:12px; text-decoration:none; color:#555;">Skip
+                        to Invoice &rarr;</a> -->
+                    <!-- <div style="margin-top:20px; text-align:center;">
+    <a href="quotation.html" class="btn" style="background:#3498db; color:white; padding:12px 24px; text-decoration:none;">
+        → Go to Quotation Editor
+    </a>
+</div> -->
+                    <div style="text-align:center; font-size:12px; color:#555; margin-top:10px;">or</div>
+                    <button type="button" class="btn"
+                        style="background:#3498db; color:white; padding:12px 24px; margin-top:10px;"
+                        onclick="window.location.href='quotation.html'">
+                        → Go to Quotation Editor
+                    </button>
+                    <div style="text-align:center; font-size:12px; color:#555; margin-top:10px;">or</div>
+                    <button type="button" class="btn"
+                        style="background:#27ae60; color:white; padding:12px 24px; margin-top:10px;"
+                        onclick="window.location.href='invoice.html'">
+                        → Skip to Invoice Editor
+                    </button>
+
                 </form>
             </div>
         </aside>
@@ -133,19 +167,21 @@
                         <img id="prevLogo" style="display:none; margin: 0 auto;">
                         <div id="prevBrand" class="brand-title"></div>
                     </div>
-                    <div><h1 class="inv-title">PREVIEW</h1></div>
+                    <div>
+                        <h1 class="inv-title">PREVIEW</h1>
+                    </div>
                 </div>
-                
+
                 <div class="rounded-box">
                     <strong>Vendor Details:</strong><br>
                     <span id="prevAddress" style="white-space: pre-wrap;"></span>
                 </div>
 
                 <div class="totals-area">
-                     <div class="auth-section">
+                    <div class="auth-section">
                         <div class="stamp-wrap" id="prevStamp"></div>
                         <img id="prevSig" class="signature-img" style="display:none;">
-                     </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -154,7 +190,7 @@
     <script src="script.js"></script>
     <script type="module">
         const data = loadData();
-        
+
         // Load UI
         document.getElementById('trackPrefix').value = data.tracker.prefix;
         document.getElementById('trackNum').value = data.tracker.currentNum;
@@ -165,15 +201,15 @@
         document.getElementById('logoBase64').value = data.company.logo;
         document.getElementById('logoWidth').value = data.company.logoWidth || 100;
         document.getElementById('widthDisp').innerText = (data.company.logoWidth || 100) + 'px';
-        
+
         document.getElementById('sigBase64').value = data.company.signature || "";
         document.getElementById('sigX').value = data.company.signatureX || 0;
         document.getElementById('sigXDisp').innerText = (data.company.signatureX || 0) + 'px';
-        
+
         document.getElementById('themeColor').value = data.visuals.themeColor;
         document.getElementById('titleColor').value = data.visuals.titleColor;
         document.getElementById('textColor').value = data.visuals.textColor;
-        
+
         document.getElementById('stampShow').value = data.stamp.show;
         document.getElementById('stampTop').value = data.stamp.top;
         document.getElementById('stampBottom').value = data.stamp.bottom;
@@ -187,9 +223,9 @@
 
         // Listeners
         document.querySelectorAll('input:not([type="file"]), textarea, select').forEach(i => i.addEventListener('input', updatePreview));
-        
+
         // Logo upload with background removal option
-        document.getElementById('logoInput').addEventListener('change', async function() {
+        document.getElementById('logoInput').addEventListener('change', async function () {
             const removeBg = document.getElementById('logoRemoveBg').checked;
             await handleImageUpload(this, (base64) => {
                 document.getElementById('logoBase64').value = base64;
@@ -198,7 +234,7 @@
         });
 
         // Signature upload with background removal option
-        document.getElementById('sigInput').addEventListener('change', async function() {
+        document.getElementById('sigInput').addEventListener('change', async function () {
             const removeBg = document.getElementById('sigRemoveBg').checked;
             await handleImageUpload(this, (base64) => {
                 document.getElementById('sigBase64').value = base64;
@@ -222,22 +258,22 @@
             // Update Content
             document.getElementById('prevBrand').textContent = document.getElementById('brandName').value;
             document.getElementById('prevAddress').textContent = document.getElementById('address').value;
-            
+
             const logo = document.getElementById('prevLogo');
             const logoData = document.getElementById('logoBase64').value;
             const logoW = document.getElementById('logoWidth').value;
-            if(logoData) { logo.src = logoData; logo.style.display = 'block'; logo.style.width = logoW + 'px'; }
-            
+            if (logoData) { logo.src = logoData; logo.style.display = 'block'; logo.style.width = logoW + 'px'; }
+
             const sig = document.getElementById('prevSig');
             const sigData = document.getElementById('sigBase64').value;
             const sigX = document.getElementById('sigX').value;
-            
-            if(sigData) { 
-                sig.src = sigData; 
-                sig.style.display = 'block'; 
+
+            if (sigData) {
+                sig.src = sigData;
+                sig.style.display = 'block';
                 sig.style.transform = `translateX(${sigX}px)`;
-            } else { 
-                sig.style.display = 'none'; 
+            } else {
+                sig.style.display = 'none';
             }
 
             // Update Stamp
@@ -254,7 +290,7 @@
             document.getElementById('prevStamp').innerHTML = getStampSVG(stampConfig, new Date());
         }
 
-        window.saveSettingsForm = function() {
+        window.saveSettingsForm = function () {
             const current = {
                 company: {
                     brandName: document.getElementById('brandName').value,
@@ -289,4 +325,5 @@
         }
     </script>
 </body>
+
 </html>
